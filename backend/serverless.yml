@@ -2,6 +2,11 @@ service: styleai-backend
 
 frameworkVersion: '3'
 
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-webpack
+  - serverless-offline
+
 provider:
   name: aws
   runtime: nodejs18.x
@@ -53,13 +58,10 @@ provider:
           Resource:
             - "arn:aws:s3:::${env:S3_BUCKET}"
 
-plugins:
-  - serverless-webpack
-  - serverless-offline
 
 custom:
   webpack:
-    webpackConfig: 'webpack.config.js'
+    webpackConfig: 'webpack.config.cjs'
     includeModules: true
     packager: 'npm'
 
