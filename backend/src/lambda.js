@@ -3,12 +3,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
-import wardrobeRoutes from './routes/wardrobe.js';
-import recommendationRoutes from './routes/recommendations.js';
-import marketplaceRoutes from './routes/marketplace.js';
-import subscriptionRoutes from './routes/subscription.js';
-import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from '../routes/auth.js';
+import wardrobeRoutes from '../routes/wardrobe.js';
+import recommendationRoutes from '../routes/recommendations.js';
+import marketplaceRoutes from '../routes/marketplace.js';
+import subscriptionRoutes from '../routes/subscription.js';
+import { errorHandler } from '../middleware/errorHandler.js';
 
 // Load environment variables
 dotenv.config();
