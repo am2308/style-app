@@ -1,49 +1,99 @@
-const express = require("express");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const authRoutes = require("./routes/authRoutes");
-const imageRoutes = require("./routes/imageRoutes");
-const recommendationRoutes = require("./routes/recommendationRoutes");
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth.js';
+import wardrobeRoutes from './routes/wardrobe.js';
+import recommendationRoutes from './routes/recommendations.js';
+import marketplaceRoutes from './routes/marketplace.js';
+import subscriptionRoutes from './routes/subscription.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { testAWSConnection } from './config/aws.js';
 
+// Load environment variables
 dotenv.config();
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
-const app = express();
-const PORT = process.env.PORT || 5000;
 
-// CORS Configuration
-const corsOptions = {
-    origin: "http://localhost:85", // Frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
-    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
-    credentials: true, // Allow cookies if needed
-    optionsSuccessStatus: 200, // For preflight requests
-};
-app.use(cors(corsOptions)); // Enable CORS
-app.options("*", cors(corsOptions));
-// app.use(cors());
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Validate required environment variables
+const requiredEnvVars = [
+  'JWT_SECRET',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'AWS_REGION'
+];
+
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error('❌ Missing required environment variables:');
+  missingEnvVars.forEach(varName => {
+    console.error(`   - ${varName}`);
+  });
+  console.error('\nPlease check your .env file and ensure all required variables are set.');
+  process.exit(1);
+}
 
 // Middleware
-app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
-});
+app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+}));
+app.use(morgan('combined'));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.use(express.json());
-app.use("/uploads", express.static("uploads")); // Serve uploaded images
+// Health check
+app.get('/health', async (req, res) => {
+  const awsStatus = await testAWSConnection();
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    aws: awsStatus ? 'Connected' : 'Disconnected'
+  });
+});
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api", imageRoutes);
-app.use("/api/recommendations", recommendationRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/wardrobe', wardrobeRoutes);
+app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
-// Root Endpoint
-app.get("/", (req, res) => {
-  res.send("Welcome to the AI Fashion Advisor Backend!");
+// Error handling
+app.use(errorHandler);
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Start server
+const startServer = async () => {
+  try {
+    console.log('🚀 Starting StyleAI Backend Server...');
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    // Test AWS connection before starting
+    const awsConnected = await testAWSConnection();
+    if (!awsConnected) {
+      console.warn('⚠️  AWS connection failed, but server will continue to start');
+      console.warn('   Please check your AWS credentials and configuration');
+    }
+    
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`💳 Subscription system enabled`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
 
-// app.use(cors({ origin: "*" })); // Allow requests from any origin
+startServer();
