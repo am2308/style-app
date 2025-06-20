@@ -28,6 +28,11 @@ export const wardrobeService = {
     formData.append('category', itemData.category);
     formData.append('color', itemData.color);
     formData.append('image', itemData.image);
+    // ADD THIS LOG
+    console.log("FormData image:", formData.get('image'));
+    if (itemData.image) {
+      console.log("Image name:", itemData.image.name, "size:", itemData.image.size, "type:", itemData.image.type);
+    }
     
     const response = await api.post('/wardrobe', formData, {
       headers: {
