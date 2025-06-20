@@ -79,6 +79,9 @@ const WardrobePage: React.FC = () => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
       setSelectedFile(file);
+      // ADD THIS LOG!
+      console.log("Selected file:", acceptedFiles[0]);
+      console.log("File size:", acceptedFiles[0].size, "type:", acceptedFiles[0].type);
       const imageUrl = URL.createObjectURL(file);
       setPreviewImage(imageUrl);
       setError(null);
@@ -125,6 +128,11 @@ const WardrobePage: React.FC = () => {
   };
 
   const handleAddItem = async (e: React.FormEvent) => {
+    // ... your code, validate form, etc.
+    console.log("Submitting item with file:", selectedFile);
+    if (selectedFile) {
+      console.log("File size:", selectedFile.size, "type:", selectedFile.type);
+    }
     e.preventDefault();
     setError(null);
 
