@@ -6,6 +6,8 @@ import path from 'path';
 export const uploadImageToS3 = async (file, userId, category) => {
   const fileExtension = path.extname(file.originalname);
   const fileName = `${userId}/${category}/${uuidv4()}${fileExtension}`;
+  // Log the buffer length here
+  console.log('Uploading image: ', file.originalname, 'Buffer length:', file.buffer ? file.buffer.length : 'undefined');
 
   const uploadParams = {
     Bucket: S3_BUCKET,
